@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dealer Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --paper:#EEF0E7;
+    --surface:#FFFFFF;
+    --ink:#1F2A24;
+    --ink-soft:#5B6459;
+    --line:#D7DACB;
+    --green:#2B5D45;
+    --green-deep:#1B3E2E;
+    --ochre:#8A6535;
+    --ochre-soft:#EFE3CE;
+    --err:#9A3B2B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:0 24px 80px;
+  }
+
+  /* ---------- Header ---------- */
+  header{
+    padding:48px 0 28px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .brand h1{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:34px;
+    letter-spacing:-0.01em;
+    margin:0 0 4px;
+    color:var(--green-deep);
+  }
+  .brand p{
+    margin:0;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    max-width:420px;
+    line-height:1.5;
+  }
+  .file-status{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    text-align:right;
+  }
+  .file-status strong{ color:var(--green-deep); font-weight:500; }
+
+  button, .btn{
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    border:none;
+    border-radius:3px;
+    padding:11px 18px;
+    background:var(--green-deep);
+    color:#fff;
+    transition:background 0.15s ease;
+  }
+  button:hover, .btn:hover{ background:var(--green); }
+  button:focus-visible, .btn:focus-visible, select:focus-visible, input:focus-visible{
+    outline:2px solid var(--green);
+    outline-offset:2px;
+  }
+  .btn-ghost{
+    background:transparent;
+    color:var(--green-deep);
+    border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ background:var(--surface); }
+
+  /* ---------- Empty state / upload ---------- */
+  .dropzone{
+    margin-top:56px;
+    border:1px dashed #B7BCA8;
+    border-radius:6px;
+    background:var(--surface);
+    padding:64px 32px;
+    text-align:center;
+  }
+  .dropzone.drag{
+    border-color:var(--green);
+    background:#F4F6EE;
+  }
+  .dropzone .mark{
+    font-family:'Fraunces',serif;
+    font-size:22px;
+    color:var(--green-deep);
+    margin-bottom:8px;
+  }
+  .dropzone p{
+    color:var(--ink-soft);
+    font-size:14.5px;
+    margin:0 0 24px;
+  }
+  input[type=file]{ display:none; }
+  .hint{
+    margin-top:18px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    color:#8B9284;
+  }
+  .error-box{
+    margin-top:20px;
+    background:#FBEDE9;
+    border:1px solid #E3B6A9;
+    color:var(--err);
+    font-size:13.5px;
+    padding:12px 16px;
+    border-radius:4px;
+    display:none;
+  }
+
+  /* ---------- Selector bar ---------- */
+  .selector{
+    margin-top:32px;
+    display:none;
+  }
+  .selector.active{ display:block; }
+  .selector label{
+    display:block;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    font-weight:500;
+  }
+  .combo{ position:relative; max-width:480px; }
+  .combo input{
+    width:100%;
+    font-family:'Inter',sans-serif;
+    font-size:16px;
+    padding:13px 16px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .combo input::placeholder{ color:#9AA192; }
+
+  /* ---------- Summary ---------- */
+  .summary{
+    margin-top:40px;
+    display:none;
+  }
+  .summary.active{ display:block; }
+  .summary-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:12px 24px;
+    padding-bottom:18px;
+    border-bottom:2px solid var(--green-deep);
+  }
+  .summary-head h2{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:24px;
+    margin:0;
+    color:var(--ink);
+  }
+  .summary-head .meta{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .stat-row{
+    display:flex;
+    gap:0;
+    margin-top:20px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    overflow:hidden;
+    background:var(--surface);
+  }
+  .stat{
+    flex:1;
+    padding:16px 20px;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{ border-right:none; }
+  .stat .num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:22px;
+    color:var(--ochre);
+    font-weight:500;
+  }
+  .stat .lbl{
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+
+  /* ---------- Company groups ---------- */
+  .company-group{
+    margin-top:36px;
+  }
+  .company-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--ink);
+    margin-bottom:2px;
+  }
+  .company-head h3{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:17px;
+    margin:0;
+    color:var(--green-deep);
+  }
+  .company-head .company-qty{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ochre);
+  }
+
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+  }
+  thead th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--ink-soft);
+    font-weight:500;
+    padding:10px 10px 8px;
+    border-bottom:1px solid var(--line);
+  }
+  tbody td{
+    padding:11px 10px;
+    border-bottom:1px solid #E6E8DC;
+    vertical-align:top;
+  }
+  tbody tr:hover td{ background:#F6F7F0; }
+  td.num, th.num{ text-align:right; font-family:'IBM Plex Mono',monospace; }
+  td.mono{ font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); font-size:12.5px; }
+  .status{
+    display:inline-block;
+    font-size:11px;
+    font-family:'IBM Plex Mono',monospace;
+    padding:2px 7px;
+    border-radius:3px;
+    background:var(--ochre-soft);
+    color:var(--ochre);
+  }
+
+  .no-match{
+    margin-top:40px;
+    padding:40px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:6px;
+    display:none;
+  }
+  .no-match.active{ display:block; }
+
+  footer{
+    margin-top:60px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    font-size:12px;
+    color:#9AA192;
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+
+  @media (max-width:640px){
+    header{ padding-top:32px; }
+    .brand h1{ font-size:27px; }
+    .file-status{ text-align:left; }
+    thead{ display:none; }
+    table, tbody, tr, td{ display:block; width:100%; }
+    tbody tr{
+      border-bottom:1px solid var(--line);
+      padding:10px 0;
+    }
+    tbody td{
+      border-bottom:none;
+      padding:3px 0;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+    }
+    tbody td.num{ text-align:right; }
+    tbody td::before{
+      content:attr(data-label);
+      color:var(--ink-soft);
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:0.04em;
+      flex-shrink:0;
+    }
+    .stat-row{ flex-wrap:wrap; }
+    .stat{ flex:1 1 50%; border-bottom:1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Dealer Ledger</h1>
+      <p>Upload a transaction sheet, then pick a dealer to see everything they've moved, across every company.</p>
+    </div>
+    <div class="file-status" id="fileStatus"></div>
+  </header>
+
+  <div class="dropzone" id="dropzone">
+    <div class="mark">＋ Upload a sheet</div>
+    <p>Drop an .xlsx or .csv transaction export here, or choose a file.<br>Nothing leaves your browser — the file is read locally.</p>
+    <button id="chooseBtn" type="button">Choose file</button>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    <div class="hint">Looks for a header row containing TRANSACTION ID, DEALER NAME, PLANT, and QUANTITY(MT)</div>
+    <div class="error-box" id="errorBox"></div>
+  </div>
+
+  <div class="selector" id="selector">
+    <label for="dealerInput">Select dealer</label>
+    <div class="combo">
+      <input type="text" id="dealerInput" list="dealerList" placeholder="Start typing a dealer name or ID…" autocomplete="off">
+      <datalist id="dealerList"></datalist>
+    </div>
+  </div>
+
+  <div class="no-match" id="noMatch">No transactions found for that dealer. Try selecting a name from the list.</div>
+
+  <div class="summary" id="summary">
+    <div class="summary-head">
+      <div>
+        <h2 id="dealerName">—</h2>
+        <div class="meta" id="dealerMeta">—</div>
+      </div>
+      <button class="btn-ghost" id="changeFile" type="button">Upload a different sheet</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="statTxns">0</div><div class="lbl">Transactions</div></div>
+      <div class="stat"><div class="num" id="statQty">0</div><div class="lbl">Total Quantity (MT)</div></div>
+      <div class="stat"><div class="num" id="statCos">0</div><div class="lbl">Companies</div></div>
+      <div class="stat"><div class="num" id="statRange">—</div><div class="lbl">Date Range</div></div>
+    </div>
+    <div id="groups"></div>
+  </div>
+
+  <footer>
+    <span id="rowCount"></span>
+    <span>Static, client-side — re-upload anytime</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const chooseBtn = document.getElementById('chooseBtn');
+  const errorBox = document.getElementById('errorBox');
+  const fileStatus = document.getElementById('fileStatus');
+  const selector = document.getElementById('selector');
+  const dealerInput = document.getElementById('dealerInput');
+  const dealerList = document.getElementById('dealerList');
+  const summary = document.getElementById('summary');
+  const noMatch = document.getElementById('noMatch');
+  const groupsEl = document.getElementById('groups');
+  const rowCountEl = document.getElementById('rowCount');
+  const changeFileBtn = document.getElementById('changeFile');
+
+  let rows = [];             // parsed transaction objects
+  let dealerIndex = new Map(); // key "Name — ID" -> array of rows
+
+  const REQUIRED_HEADERS = ['TRANSACTION ID', 'DEALER NAME', 'QUANTITY(MT)'];
+
+  chooseBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+  ['dragenter','dragover'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag'); })
+  );
+  dropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  changeFileBtn.addEventListener('click', () => {
+    summary.classList.remove('active');
+    noMatch.classList.remove('active');
+    selector.classList.remove('active');
+    dropzone.style.display = 'block';
+    dealerInput.value = '';
+  });
+
+  function showError(msg){
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+  function clearError(){
+    errorBox.style.display = 'none';
+    errorBox.textContent = '';
+  }
+
+  function handleFile(file){
+    clearError();
+    fileStatus.innerHTML = 'Reading <strong>' + escapeHtml(file.name) + '</strong>…';
+    const reader = new FileReader();
+    reader.onerror = () => showError('Could not read that file. Please try again.');
+    reader.onload = (e) => {
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: false });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        parseGrid(grid, file.name);
+      }catch(err){
+        console.error(err);
+        showError('Could not parse this file. Make sure it is a valid .xlsx or .csv export.');
+        fileStatus.textContent = '';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function parseGrid(grid, filename){
+    // find the header row: the first row containing all REQUIRED_HEADERS
+    let headerRowIdx = -1, headerRow = null;
+    for (let i = 0; i < Math.min(grid.length, 30); i++){
+      const cells = grid[i].map(c => String(c || '').trim().toUpperCase());
+      const hasAll = REQUIRED_HEADERS.every(h => cells.includes(h));
+      if (hasAll){ headerRowIdx = i; headerRow = grid[i].map(c => String(c || '').trim()); break; }
+    }
+    if (headerRowIdx === -1){
+      showError('Could not find a transaction header row in this sheet (looking for columns like TRANSACTION ID, DEALER NAME, QUANTITY(MT)).');
+      fileStatus.textContent = '';
+      return;
+    }
+
+    const col = {};
+    headerRow.forEach((h, idx) => { if (h) col[h.toUpperCase()] = idx; });
+    const get = (arr, name) => {
+      const idx = col[name];
+      if (idx === undefined) return '';
+      return cleanCell(arr[idx]);
+    };
+
+    rows = [];
+    for (let i = headerRowIdx + 1; i < grid.length; i++){
+      const r = grid[i];
+      if (!r || r.every(c => String(c||'').trim() === '')) continue;
+      const dealerName = get(r, 'DEALER NAME');
+      if (!dealerName) continue;
+      rows.push({
+        txnId: get(r, 'TRANSACTION ID'),
+        invoiceNo: get(r, 'INVOICE NO'),
+        invoiceDate: get(r, 'INVOICE DATE'),
+        company: get(r, 'PLANT') || get(r, 'MANUFACTURER') || '—',
+        dealerId: get(r, 'DEALER ID'),
+        dealerName: dealerName,
+        dealerType: get(r, 'DEALER TYPE'),
+        district: get(r, 'DISTRICT'),
+        product: get(r, 'COMPANY PRODUCT'),
+        qty: parseFloat(get(r, 'QUANTITY(MT)') || get(r, 'QUANTITY') || '0') || 0,
+        status: get(r, 'STATUS'),
+        entryDate: get(r, 'ENTRY DATE'),
+        lorryNo: get(r, 'LORRY NO.')
+      });
+    }
+
+    if (rows.length === 0){
+      showError('Found a header row, but no transaction rows underneath it.');
+      fileStatus.textContent = '';
+      return;
+    }
+
+    buildDealerIndex();
+    fileStatus.innerHTML = '<strong>' + escapeHtml(filename) + '</strong> · ' + rows.length + ' transactions · ' + dealerIndex.size + ' dealers';
+    rowCountEl.textContent = rows.length + ' rows loaded from ' + filename;
+    dropzone.style.display = 'none';
+    selector.classList.add('active');
+    dealerInput.value = '';
+    dealerInput.focus();
+    summary.classList.remove('active');
+    noMatch.classList.remove('active');
+  }
+
+  function cleanCell(v){
+    if (v === undefined || v === null) return '';
+    let s = String(v).trim();
+    s = s.replace(/^'+|'+$/g, '').trim();
+    return s;
+  }
+
+  function buildDealerIndex(){
+    dealerIndex = new Map();
+    dealerList.innerHTML = '';
+    const seen = new Set();
+    const options = [];
+    rows.forEach(r => {
+      const key = r.dealerName + (r.dealerId ? ' — ' + r.dealerId : '');
+      if (!dealerIndex.has(key)) dealerIndex.set(key, []);
+      dealerIndex.get(key).push(r);
+    });
+    Array.from(dealerIndex.keys()).sort((a,b) => a.localeCompare(b)).forEach(key => {
+      const opt = document.createElement('option');
+      opt.value = key;
+      dealerList.appendChild(opt);
+    });
+  }
+
+  let debounceTimer;
+  dealerInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => selectDealer(dealerInput.value.trim()), 120);
+  });
+
+  function selectDealer(key){
+    if (!key){
+      summary.classList.remove('active');
+      noMatch.classList.remove('active');
+      return;
+    }
+    let matched = dealerIndex.get(key);
+    if (!matched){
+      // fall back to loose match (typed a name without the ID suffix, or partial)
+      const lower = key.toLowerCase();
+      const foundKey = Array.from(dealerIndex.keys()).find(k => k.toLowerCase() === lower);
+      matched = foundKey ? dealerIndex.get(foundKey) : null;
+    }
+    if (!matched){
+      summary.classList.remove('active');
+      noMatch.classList.add('active');
+      return;
+    }
+    noMatch.classList.remove('active');
+    renderDealer(key, matched);
+  }
+
+  function renderDealer(label, txns){
+    const first = txns[0];
+    document.getElementById('dealerName').textContent = first.dealerName;
+    const metaBits = [first.dealerType, first.district].filter(Boolean);
+    if (first.dealerId) metaBits.unshift('ID ' + first.dealerId);
+    document.getElementById('dealerMeta').textContent = metaBits.join(' · ');
+
+    const totalQty = txns.reduce((s,t) => s + t.qty, 0);
+    const companies = new Set(txns.map(t => t.company));
+    const dates = txns.map(t => parseDateSafe(t.invoiceDate)).filter(Boolean).sort((a,b)=>a-b);
+
+    document.getElementById('statTxns').textContent = txns.length;
+    document.getElementById('statQty').textContent = totalQty.toLocaleString(undefined,{maximumFractionDigits:2});
+    document.getElementById('statCos').textContent = companies.size;
+    document.getElementById('statRange').textContent = dates.length
+      ? formatDate(dates[0]) + ' – ' + formatDate(dates[dates.length-1])
+      : '—';
+
+    // group by company
+    const byCompany = new Map();
+    txns.forEach(t => {
+      if (!byCompany.has(t.company)) byCompany.set(t.company, []);
+      byCompany.get(t.company).push(t);
+    });
+
+    groupsEl.innerHTML = '';
+    Array.from(byCompany.keys()).sort((a,b)=>a.localeCompare(b)).forEach(company => {
+      const list = byCompany.get(company).slice().sort((a,b) => {
+        const da = parseDateSafe(a.invoiceDate), db = parseDateSafe(b.invoiceDate);
+        if (da && db) return db - da;
+        return 0;
+      });
+      const qty = list.reduce((s,t) => s + t.qty, 0);
+
+      const group = document.createElement('div');
+      group.className = 'company-group';
+
+      const head = document.createElement('div');
+      head.className = 'company-head';
+      head.innerHTML = '<h3>' + escapeHtml(company) + '</h3>' +
+        '<span class="company-qty">' + list.length + ' txn · ' + qty.toLocaleString(undefined,{maximumFractionDigits:2}) + ' MT</span>';
+      group.appendChild(head);
+
+      const table = document.createElement('table');
+      table.innerHTML =
+        '<thead><tr>' +
+        '<th>Date</th><th>Product</th><th class="num">Qty (MT)</th><th>Invoice No.</th><th>Status</th><th>Lorry No.</th>' +
+        '</tr></thead>';
+      const tbody = document.createElement('tbody');
+      list.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td data-label="Date" class="mono">' + escapeHtml(formatDate(parseDateSafe(t.invoiceDate)) || t.invoiceDate) + '</td>' +
+          '<td data-label="Product">' + escapeHtml(t.product) + '</td>' +
+          '<td data-label="Qty (MT)" class="num">' + t.qty.toLocaleString(undefined,{maximumFractionDigits:3}) + '</td>' +
+          '<td data-label="Invoice No." class="mono">' + escapeHtml(t.invoiceNo) + '</td>' +
+          '<td data-label="Status"><span class="status">' + escapeHtml(t.status || '—') + '</span></td>' +
+          '<td data-label="Lorry No." class="mono">' + escapeHtml(t.lorryNo) + '</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      group.appendChild(table);
+      groupsEl.appendChild(group);
+    });
+
+    summary.classList.add('active');
+  }
+
+  function parseDateSafe(s){
+    if (!s) return null;
+    const t = String(s).trim();
+    const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (iso) return new Date(+iso[1], +iso[2]-1, +iso[3]);
+    const dmy = t.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+    if (dmy) return new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+    const d = new Date(t);
+    return isNaN(d) ? null : d;
+  }
+  function formatDate(d){
+    if (!d) return '';
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return String(d.getDate()).padStart(2,'0') + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function escapeHtml(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+})();
+</script>
+</body>
+</html>
