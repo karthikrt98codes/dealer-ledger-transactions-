@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root{
     --paper:#EEF0E7;
@@ -60,6 +61,11 @@
     max-width:420px;
     line-height:1.5;
   }
+  .header-right{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
   .file-status{
     font-family:'IBM Plex Mono',monospace;
     font-size:12.5px;
@@ -91,6 +97,19 @@
     border:1px solid var(--line);
   }
   .btn-ghost:hover{ background:var(--surface); }
+
+  .action-btn{
+    display:none;
+    align-items:center;
+    gap:7px;
+  }
+  .action-btn.active{ display:inline-flex; }
+  .action-btn svg{ width:15px; height:15px; flex-shrink:0; }
+  .action-btn:disabled{ opacity:0.6; cursor:default; }
+  .print-btn{ background:var(--ochre); }
+  .print-btn:hover{ background:#7A5A2E; }
+  .download-btn{ background:var(--green-deep); }
+  .download-btn:hover{ background:var(--green); }
 
   /* ---------- Empty state / upload ---------- */
   .dropzone{
@@ -329,6 +348,19 @@
     .stat-row{ flex-wrap:wrap; }
     .stat{ flex:1 1 50%; border-bottom:1px solid var(--line); }
   }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{ background:#fff; }
+    header, .dropzone, .selector, footer, .action-btn, .btn-ghost{ display:none !important; }
+    .wrap{ max-width:100%; padding:0; }
+    .summary{ display:block !important; margin-top:0; }
+    .summary-head{ border-bottom:2px solid #000; }
+    .company-group{ break-inside:avoid; }
+    table{ font-size:11px; }
+    tbody tr:hover td{ background:none; }
+    a[href]:after{ content:""; }
+  }
 </style>
 </head>
 <body>
@@ -339,7 +371,17 @@
       <h1>Dealer Ledger</h1>
       <p>Upload a transaction sheet, then pick a dealer to see everything they've moved, across every company.</p>
     </div>
-    <div class="file-status" id="fileStatus"></div>
+    <div class="header-right">
+      <div class="file-status" id="fileStatus"></div>
+      <button class="action-btn download-btn" id="downloadBtn" type="button" title="Download this report as PDF">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span id="downloadBtnLabel">Download PDF</span>
+      </button>
+      <button class="action-btn print-btn" id="printBtn" type="button" title="Print this report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print
+      </button>
+    </div>
   </header>
 
   <div class="dropzone" id="dropzone">
@@ -400,6 +442,9 @@
   const groupsEl = document.getElementById('groups');
   const rowCountEl = document.getElementById('rowCount');
   const changeFileBtn = document.getElementById('changeFile');
+  const printBtn = document.getElementById('printBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadBtnLabel = document.getElementById('downloadBtnLabel');
 
   let rows = [];             // parsed transaction objects
   let dealerIndex = new Map(); // key "Name — ID" -> array of rows
@@ -423,8 +468,44 @@
     summary.classList.remove('active');
     noMatch.classList.remove('active');
     selector.classList.remove('active');
+    printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
     dropzone.style.display = 'block';
     dealerInput.value = '';
+  });
+
+  printBtn.addEventListener('click', () => window.print());
+
+  downloadBtn.addEventListener('click', () => {
+    const el = document.getElementById('summary');
+    const dealerName = document.getElementById('dealerName').textContent || 'dealer';
+    const filename = dealerName.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '-transactions.pdf';
+
+    downloadBtn.disabled = true;
+    downloadBtnLabel.textContent = 'Generating…';
+
+    const opt = {
+      margin: 10,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        ignoreElements: (node) => node.classList && node.classList.contains('btn-ghost')
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: '.company-group' }
+    };
+
+    html2pdf().set(opt).from(el).save().then(() => {
+      downloadBtn.disabled = false;
+      downloadBtnLabel.textContent = 'Download PDF';
+    }).catch((err) => {
+      console.error(err);
+      downloadBtn.disabled = false;
+      downloadBtnLabel.textContent = 'Download PDF';
+      showError('Could not generate the PDF. Please try again, or use the Print button instead.');
+    });
   });
 
   function showError(msg){
@@ -517,6 +598,7 @@
     dealerInput.focus();
     summary.classList.remove('active');
     noMatch.classList.remove('active');
+    printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
   }
 
   function cleanCell(v){
@@ -529,8 +611,6 @@
   function buildDealerIndex(){
     dealerIndex = new Map();
     dealerList.innerHTML = '';
-    const seen = new Set();
-    const options = [];
     rows.forEach(r => {
       const key = r.dealerName + (r.dealerId ? ' — ' + r.dealerId : '');
       if (!dealerIndex.has(key)) dealerIndex.set(key, []);
@@ -553,6 +633,7 @@
     if (!key){
       summary.classList.remove('active');
       noMatch.classList.remove('active');
+      printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
       return;
     }
     let matched = dealerIndex.get(key);
@@ -565,6 +646,7 @@
     if (!matched){
       summary.classList.remove('active');
       noMatch.classList.add('active');
+      printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
       return;
     }
     noMatch.classList.remove('active');
@@ -637,6 +719,7 @@
     });
 
     summary.classList.add('active');
+    printBtn.classList.add('active'); downloadBtn.classList.add('active');
   }
 
   function parseDateSafe(s){
