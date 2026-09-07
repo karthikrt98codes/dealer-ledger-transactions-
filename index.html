@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dealer Ledger</title>
+<title>FACT Market &amp; Dealer Ledger</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -31,7 +31,7 @@
     min-height:100vh;
   }
   .wrap{
-    max-width:1040px;
+    max-width:1080px;
     margin:0 auto;
     padding:0 24px 80px;
   }
@@ -49,7 +49,7 @@
   .brand h1{
     font-family:'Fraunces',serif;
     font-weight:500;
-    font-size:34px;
+    font-size:32px;
     letter-spacing:-0.01em;
     margin:0 0 4px;
     color:var(--green-deep);
@@ -58,7 +58,7 @@
     margin:0;
     color:var(--ink-soft);
     font-size:14.5px;
-    max-width:420px;
+    max-width:460px;
     line-height:1.5;
   }
   .header-right{
@@ -153,12 +153,63 @@
     display:none;
   }
 
-  /* ---------- Selector bar ---------- */
-  .selector{
-    margin-top:32px;
+  /* ---------- Tabs ---------- */
+  .tabs{
+    margin-top:40px;
     display:none;
+    gap:4px;
+    border-bottom:1px solid var(--line);
   }
-  .selector.active{ display:block; }
+  .tabs.active{ display:flex; }
+  .tab-btn{
+    background:transparent;
+    color:var(--ink-soft);
+    border:none;
+    border-radius:0;
+    padding:10px 4px;
+    margin-right:28px;
+    font-size:14.5px;
+    font-weight:500;
+    border-bottom:2px solid transparent;
+    position:relative;
+    top:1px;
+  }
+  .tab-btn:hover{ background:transparent; color:var(--ink); }
+  .tab-btn.on{ color:var(--green-deep); border-bottom-color:var(--green-deep); }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---------- Filter row ---------- */
+  .filter-row{
+    margin-top:28px;
+    display:flex;
+    align-items:flex-end;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .filter-row .field label{
+    display:block;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+    font-weight:500;
+  }
+  .filter-row select{
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    padding:11px 14px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--surface);
+    color:var(--ink);
+    min-width:220px;
+  }
+
+  /* ---------- Selector bar (dealer) ---------- */
+  .selector{ margin-top:28px; }
   .selector label{
     display:block;
     font-size:12px;
@@ -181,12 +232,8 @@
   }
   .combo input::placeholder{ color:#9AA192; }
 
-  /* ---------- Summary ---------- */
-  .summary{
-    margin-top:40px;
-    display:none;
-  }
-  .summary.active{ display:block; }
+  /* ---------- Summary / stat blocks (shared) ---------- */
+  .summary{ margin-top:32px; }
   .summary-head{
     display:flex;
     justify-content:space-between;
@@ -236,10 +283,8 @@
     margin-top:4px;
   }
 
-  /* ---------- Company groups ---------- */
-  .company-group{
-    margin-top:36px;
-  }
+  /* ---------- Company groups (dealer view) ---------- */
+  .company-group{ margin-top:36px; }
   .company-head{
     display:flex;
     justify-content:space-between;
@@ -294,6 +339,47 @@
     color:var(--ochre);
   }
 
+  /* ---------- Market share table extras ---------- */
+  .ms-table td.product, .ms-table th.product{ min-width:160px; }
+  .share-cell{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
+  .share-bar{
+    width:90px;
+    height:7px;
+    border-radius:4px;
+    background:#E6E8DC;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .share-bar-fill{
+    height:100%;
+    background:var(--green-deep);
+    border-radius:4px;
+  }
+  .share-pct{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--green-deep);
+    font-weight:500;
+    min-width:48px;
+    text-align:right;
+  }
+  .ms-note{
+    margin-top:18px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    line-height:1.6;
+  }
+  .ms-empty{
+    margin-top:24px;
+    padding:32px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:14px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:6px;
+  }
+
   .no-match{
     margin-top:40px;
     padding:40px;
@@ -321,21 +407,12 @@
 
   @media (max-width:640px){
     header{ padding-top:32px; }
-    .brand h1{ font-size:27px; }
+    .brand h1{ font-size:25px; }
     .file-status{ text-align:left; }
     thead{ display:none; }
     table, tbody, tr, td{ display:block; width:100%; }
-    tbody tr{
-      border-bottom:1px solid var(--line);
-      padding:10px 0;
-    }
-    tbody td{
-      border-bottom:none;
-      padding:3px 0;
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-    }
+    tbody tr{ border-bottom:1px solid var(--line); padding:10px 0; }
+    tbody td{ border-bottom:none; padding:3px 0; display:flex; justify-content:space-between; gap:12px; }
     tbody td.num{ text-align:right; }
     tbody td::before{
       content:attr(data-label);
@@ -347,19 +424,20 @@
     }
     .stat-row{ flex-wrap:wrap; }
     .stat{ flex:1 1 50%; border-bottom:1px solid var(--line); }
+    .share-cell{ justify-content:flex-start; }
   }
 
   /* ---------- Print ---------- */
   @media print{
     body{ background:#fff; }
-    header, .dropzone, .selector, footer, .action-btn, .btn-ghost{ display:none !important; }
+    header, .dropzone, .tabs, .filter-row, .selector, footer, .action-btn, .btn-ghost{ display:none !important; }
     .wrap{ max-width:100%; padding:0; }
-    .summary{ display:block !important; margin-top:0; }
+    .view{ display:block !important; }
+    .summary{ margin-top:0; }
     .summary-head{ border-bottom:2px solid #000; }
     .company-group{ break-inside:avoid; }
     table{ font-size:11px; }
     tbody tr:hover td{ background:none; }
-    a[href]:after{ content:""; }
   }
 </style>
 </head>
@@ -368,16 +446,16 @@
 
   <header>
     <div class="brand">
-      <h1>Dealer Ledger</h1>
-      <p>Upload a transaction sheet, then pick a dealer to see everything they've moved, across every company.</p>
+      <h1>FACT Market &amp; Dealer Ledger</h1>
+      <p>Upload a transaction sheet to see FACT's district-wise market share, or look up any dealer's transactions across every company.</p>
     </div>
     <div class="header-right">
       <div class="file-status" id="fileStatus"></div>
-      <button class="action-btn download-btn" id="downloadBtn" type="button" title="Download this report as PDF">
+      <button class="action-btn download-btn" id="downloadBtn" type="button" title="Download this view as PDF">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
         <span id="downloadBtnLabel">Download PDF</span>
       </button>
-      <button class="action-btn print-btn" id="printBtn" type="button" title="Print this report">
+      <button class="action-btn print-btn" id="printBtn" type="button" title="Print this view">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
         Print
       </button>
@@ -393,31 +471,78 @@
     <div class="error-box" id="errorBox"></div>
   </div>
 
-  <div class="selector" id="selector">
-    <label for="dealerInput">Select dealer</label>
-    <div class="combo">
-      <input type="text" id="dealerInput" list="dealerList" placeholder="Start typing a dealer name or ID…" autocomplete="off">
-      <datalist id="dealerList"></datalist>
+  <div class="tabs" id="tabs">
+    <button class="tab-btn on" id="tabMarket" type="button">Market Share</button>
+    <button class="tab-btn" id="tabDealer" type="button">Dealer Lookup</button>
+  </div>
+
+  <!-- ===== MARKET SHARE VIEW ===== -->
+  <div class="view active" id="marketView">
+    <div class="filter-row">
+      <div class="field">
+        <label for="districtFilter">District</label>
+        <select id="districtFilter">
+          <option value="">All districts</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="summary" id="marketSummary">
+      <div class="summary-head">
+        <div>
+          <h2>FACT — Market Share</h2>
+          <div class="meta" id="marketMeta">All districts</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="msFactQty">0</div><div class="lbl">FACT Qty (MT)</div></div>
+        <div class="stat"><div class="num" id="msTotalQty">0</div><div class="lbl">Total Market Qty (MT)</div></div>
+        <div class="stat"><div class="num" id="msShare">0%</div><div class="lbl">Overall Market Share</div></div>
+        <div class="stat"><div class="num" id="msProducts">0</div><div class="lbl">FACT Products Tracked</div></div>
+      </div>
+
+      <table class="ms-table" style="margin-top:28px;">
+        <thead><tr>
+          <th class="product">Product</th>
+          <th class="num">FACT Qty (MT)</th>
+          <th class="num">Other Companies (MT)</th>
+          <th class="num">Total Market (MT)</th>
+          <th class="num">Market Share</th>
+        </tr></thead>
+        <tbody id="msBody"></tbody>
+      </table>
+      <div class="ms-empty" id="msEmpty" style="display:none;">No FACT transactions found in this district for any tracked product.</div>
+      <div class="ms-note">Market share = FACT quantity ÷ total quantity sold by all companies (including FACT) for that product, in metric tonnes, for the selected district.</div>
     </div>
   </div>
 
-  <div class="no-match" id="noMatch">No transactions found for that dealer. Try selecting a name from the list.</div>
-
-  <div class="summary" id="summary">
-    <div class="summary-head">
-      <div>
-        <h2 id="dealerName">—</h2>
-        <div class="meta" id="dealerMeta">—</div>
+  <!-- ===== DEALER LOOKUP VIEW ===== -->
+  <div class="view" id="dealerView">
+    <div class="selector">
+      <label for="dealerInput">Select dealer</label>
+      <div class="combo">
+        <input type="text" id="dealerInput" list="dealerList" placeholder="Start typing a dealer name or ID…" autocomplete="off">
+        <datalist id="dealerList"></datalist>
       </div>
-      <button class="btn-ghost" id="changeFile" type="button">Upload a different sheet</button>
     </div>
-    <div class="stat-row">
-      <div class="stat"><div class="num" id="statTxns">0</div><div class="lbl">Transactions</div></div>
-      <div class="stat"><div class="num" id="statQty">0</div><div class="lbl">Total Quantity (MT)</div></div>
-      <div class="stat"><div class="num" id="statCos">0</div><div class="lbl">Companies</div></div>
-      <div class="stat"><div class="num" id="statRange">—</div><div class="lbl">Date Range</div></div>
+
+    <div class="no-match" id="noMatch">No transactions found for that dealer. Try selecting a name from the list.</div>
+
+    <div class="summary" id="summary" style="display:none;">
+      <div class="summary-head">
+        <div>
+          <h2 id="dealerName">—</h2>
+          <div class="meta" id="dealerMeta">—</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="statTxns">0</div><div class="lbl">Transactions</div></div>
+        <div class="stat"><div class="num" id="statQty">0</div><div class="lbl">Total Quantity (MT)</div></div>
+        <div class="stat"><div class="num" id="statCos">0</div><div class="lbl">Companies</div></div>
+        <div class="stat"><div class="num" id="statRange">—</div><div class="lbl">Date Range</div></div>
+      </div>
+      <div id="groups"></div>
     </div>
-    <div id="groups"></div>
   </div>
 
   <footer>
@@ -434,23 +559,61 @@
   const chooseBtn = document.getElementById('chooseBtn');
   const errorBox = document.getElementById('errorBox');
   const fileStatus = document.getElementById('fileStatus');
-  const selector = document.getElementById('selector');
+  const rowCountEl = document.getElementById('rowCount');
+  const printBtn = document.getElementById('printBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadBtnLabel = document.getElementById('downloadBtnLabel');
+
+  const tabs = document.getElementById('tabs');
+  const tabMarket = document.getElementById('tabMarket');
+  const tabDealer = document.getElementById('tabDealer');
+  const marketView = document.getElementById('marketView');
+  const dealerView = document.getElementById('dealerView');
+
+  const districtFilter = document.getElementById('districtFilter');
+  const marketMeta = document.getElementById('marketMeta');
+  const msFactQty = document.getElementById('msFactQty');
+  const msTotalQty = document.getElementById('msTotalQty');
+  const msShare = document.getElementById('msShare');
+  const msProducts = document.getElementById('msProducts');
+  const msBody = document.getElementById('msBody');
+  const msEmpty = document.getElementById('msEmpty');
+
   const dealerInput = document.getElementById('dealerInput');
   const dealerList = document.getElementById('dealerList');
   const summary = document.getElementById('summary');
   const noMatch = document.getElementById('noMatch');
   const groupsEl = document.getElementById('groups');
-  const rowCountEl = document.getElementById('rowCount');
-  const changeFileBtn = document.getElementById('changeFile');
-  const printBtn = document.getElementById('printBtn');
-  const downloadBtn = document.getElementById('downloadBtn');
-  const downloadBtnLabel = document.getElementById('downloadBtnLabel');
-
-  let rows = [];             // parsed transaction objects
-  let dealerIndex = new Map(); // key "Name — ID" -> array of rows
 
   const REQUIRED_HEADERS = ['TRANSACTION ID', 'DEALER NAME', 'QUANTITY(MT)'];
+  const FACT_PREFIX = 'FACT';
 
+  let rows = [];
+  let factProducts = [];       // product names FACT sells, in overall qty-desc order
+  let dealerIndex = new Map();
+
+  /* ---------------- Tabs ---------------- */
+  tabMarket.addEventListener('click', () => switchTab('market'));
+  tabDealer.addEventListener('click', () => switchTab('dealer'));
+  function switchTab(which){
+    const onMarket = which === 'market';
+    tabMarket.classList.toggle('on', onMarket);
+    tabDealer.classList.toggle('on', !onMarket);
+    marketView.classList.toggle('active', onMarket);
+    dealerView.classList.toggle('active', !onMarket);
+    updateActionButtons();
+  }
+
+  function updateActionButtons(){
+    const onMarket = marketView.classList.contains('active');
+    const hasData = rows.length > 0;
+    const dealerReady = summary.style.display !== 'none';
+    const show = hasData && (onMarket || dealerReady);
+    printBtn.classList.toggle('active', show);
+    downloadBtn.classList.toggle('active', show);
+  }
+
+  /* ---------------- Upload handling ---------------- */
   chooseBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
@@ -462,50 +625,6 @@
   );
   dropzone.addEventListener('drop', e => {
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-  });
-
-  changeFileBtn.addEventListener('click', () => {
-    summary.classList.remove('active');
-    noMatch.classList.remove('active');
-    selector.classList.remove('active');
-    printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
-    dropzone.style.display = 'block';
-    dealerInput.value = '';
-  });
-
-  printBtn.addEventListener('click', () => window.print());
-
-  downloadBtn.addEventListener('click', () => {
-    const el = document.getElementById('summary');
-    const dealerName = document.getElementById('dealerName').textContent || 'dealer';
-    const filename = dealerName.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '-transactions.pdf';
-
-    downloadBtn.disabled = true;
-    downloadBtnLabel.textContent = 'Generating…';
-
-    const opt = {
-      margin: 10,
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        ignoreElements: (node) => node.classList && node.classList.contains('btn-ghost')
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'], avoid: '.company-group' }
-    };
-
-    html2pdf().set(opt).from(el).save().then(() => {
-      downloadBtn.disabled = false;
-      downloadBtnLabel.textContent = 'Download PDF';
-    }).catch((err) => {
-      console.error(err);
-      downloadBtn.disabled = false;
-      downloadBtnLabel.textContent = 'Download PDF';
-      showError('Could not generate the PDF. Please try again, or use the Print button instead.');
-    });
   });
 
   function showError(msg){
@@ -539,7 +658,6 @@
   }
 
   function parseGrid(grid, filename){
-    // find the header row: the first row containing all REQUIRED_HEADERS
     let headerRowIdx = -1, headerRow = null;
     for (let i = 0; i < Math.min(grid.length, 30); i++){
       const cells = grid[i].map(c => String(c || '').trim().toUpperCase());
@@ -566,11 +684,13 @@
       if (!r || r.every(c => String(c||'').trim() === '')) continue;
       const dealerName = get(r, 'DEALER NAME');
       if (!dealerName) continue;
+      const company = get(r, 'PLANT') || get(r, 'MANUFACTURER') || '—';
       rows.push({
         txnId: get(r, 'TRANSACTION ID'),
         invoiceNo: get(r, 'INVOICE NO'),
         invoiceDate: get(r, 'INVOICE DATE'),
-        company: get(r, 'PLANT') || get(r, 'MANUFACTURER') || '—',
+        company: company,
+        isFact: company.trim().toUpperCase().startsWith(FACT_PREFIX),
         dealerId: get(r, 'DEALER ID'),
         dealerName: dealerName,
         dealerType: get(r, 'DEALER TYPE'),
@@ -590,15 +710,19 @@
     }
 
     buildDealerIndex();
+    buildFactProducts();
+    buildDistrictOptions();
+    renderMarketShare();
+
     fileStatus.innerHTML = '<strong>' + escapeHtml(filename) + '</strong> · ' + rows.length + ' transactions · ' + dealerIndex.size + ' dealers';
     rowCountEl.textContent = rows.length + ' rows loaded from ' + filename;
     dropzone.style.display = 'none';
-    selector.classList.add('active');
+    tabs.classList.add('active');
+    switchTab('market');
     dealerInput.value = '';
-    dealerInput.focus();
-    summary.classList.remove('active');
+    summary.style.display = 'none';
     noMatch.classList.remove('active');
-    printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
+    updateActionButtons();
   }
 
   function cleanCell(v){
@@ -608,6 +732,81 @@
     return s;
   }
 
+  /* ---------------- Market share ---------------- */
+  function buildFactProducts(){
+    const totals = new Map();
+    rows.forEach(r => {
+      if (!r.isFact) return;
+      totals.set(r.product, (totals.get(r.product) || 0) + r.qty);
+    });
+    factProducts = Array.from(totals.entries())
+      .sort((a,b) => b[1] - a[1])
+      .map(e => e[0]);
+  }
+
+  function buildDistrictOptions(){
+    const districts = Array.from(new Set(rows.map(r => r.district).filter(Boolean))).sort((a,b) => a.localeCompare(b));
+    districtFilter.innerHTML = '<option value="">All districts</option>';
+    districts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      districtFilter.appendChild(opt);
+    });
+  }
+
+  districtFilter.addEventListener('change', renderMarketShare);
+
+  function renderMarketShare(){
+    const district = districtFilter.value;
+    marketMeta.textContent = district ? district + ' district' : 'All districts';
+
+    const scoped = district ? rows.filter(r => r.district === district) : rows;
+
+    let grandFact = 0, grandTotal = 0;
+    const rowsOut = [];
+
+    factProducts.forEach(product => {
+      let factQty = 0, otherQty = 0;
+      scoped.forEach(r => {
+        if (r.product !== product) return;
+        if (r.isFact) factQty += r.qty; else otherQty += r.qty;
+      });
+      const total = factQty + otherQty;
+      grandFact += factQty;
+      grandTotal += total;
+      rowsOut.push({ product, factQty, otherQty, total, share: total > 0 ? (factQty/total*100) : 0 });
+    });
+
+    rowsOut.sort((a,b) => b.factQty - a.factQty);
+
+    msFactQty.textContent = grandFact.toLocaleString(undefined,{maximumFractionDigits:2});
+    msTotalQty.textContent = grandTotal.toLocaleString(undefined,{maximumFractionDigits:2});
+    msShare.textContent = (grandTotal > 0 ? (grandFact/grandTotal*100) : 0).toFixed(1) + '%';
+    msProducts.textContent = factProducts.length;
+
+    msBody.innerHTML = '';
+    const anyActivity = rowsOut.some(r => r.total > 0);
+    msEmpty.style.display = anyActivity ? 'none' : 'block';
+
+    rowsOut.forEach(r => {
+      const tr = document.createElement('tr');
+      const pct = r.share.toFixed(1);
+      tr.innerHTML =
+        '<td data-label="Product" class="product">' + escapeHtml(r.product) + '</td>' +
+        '<td data-label="FACT Qty (MT)" class="num mono">' + r.factQty.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Other Companies (MT)" class="num mono">' + r.otherQty.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Total Market (MT)" class="num mono">' + r.total.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Market Share" class="num">' +
+          '<div class="share-cell"><div class="share-bar"><div class="share-bar-fill" style="width:' + Math.min(pct,100) + '%;"></div></div><span class="share-pct">' + pct + '%</span></div>' +
+        '</td>';
+      msBody.appendChild(tr);
+    });
+
+    updateActionButtons();
+  }
+
+  /* ---------------- Dealer lookup ---------------- */
   function buildDealerIndex(){
     dealerIndex = new Map();
     dealerList.innerHTML = '';
@@ -631,29 +830,28 @@
 
   function selectDealer(key){
     if (!key){
-      summary.classList.remove('active');
+      summary.style.display = 'none';
       noMatch.classList.remove('active');
-      printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
+      updateActionButtons();
       return;
     }
     let matched = dealerIndex.get(key);
     if (!matched){
-      // fall back to loose match (typed a name without the ID suffix, or partial)
       const lower = key.toLowerCase();
       const foundKey = Array.from(dealerIndex.keys()).find(k => k.toLowerCase() === lower);
       matched = foundKey ? dealerIndex.get(foundKey) : null;
     }
     if (!matched){
-      summary.classList.remove('active');
+      summary.style.display = 'none';
       noMatch.classList.add('active');
-      printBtn.classList.remove('active'); downloadBtn.classList.remove('active');
+      updateActionButtons();
       return;
     }
     noMatch.classList.remove('active');
-    renderDealer(key, matched);
+    renderDealer(matched);
   }
 
-  function renderDealer(label, txns){
+  function renderDealer(txns){
     const first = txns[0];
     document.getElementById('dealerName').textContent = first.dealerName;
     const metaBits = [first.dealerType, first.district].filter(Boolean);
@@ -671,7 +869,6 @@
       ? formatDate(dates[0]) + ' – ' + formatDate(dates[dates.length-1])
       : '—';
 
-    // group by company
     const byCompany = new Map();
     txns.forEach(t => {
       if (!byCompany.has(t.company)) byCompany.set(t.company, []);
@@ -718,10 +915,54 @@
       groupsEl.appendChild(group);
     });
 
-    summary.classList.add('active');
-    printBtn.classList.add('active'); downloadBtn.classList.add('active');
+    summary.style.display = 'block';
+    updateActionButtons();
   }
 
+  /* ---------------- Print / Download ---------------- */
+  printBtn.addEventListener('click', () => window.print());
+
+  downloadBtn.addEventListener('click', () => {
+    const onMarket = marketView.classList.contains('active');
+    const el = onMarket ? document.getElementById('marketSummary') : document.getElementById('summary');
+    let filenameBase;
+    if (onMarket){
+      const d = districtFilter.value;
+      filenameBase = 'fact-market-share' + (d ? '-' + d : '-all-districts');
+    } else {
+      filenameBase = (document.getElementById('dealerName').textContent || 'dealer') + '-transactions';
+    }
+    const filename = filenameBase.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '.pdf';
+
+    downloadBtn.disabled = true;
+    downloadBtnLabel.textContent = 'Generating…';
+
+    const opt = {
+      margin: 10,
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        ignoreElements: (node) => node.classList && node.classList.contains('btn-ghost')
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'], avoid: '.company-group' }
+    };
+
+    html2pdf().set(opt).from(el).save().then(() => {
+      downloadBtn.disabled = false;
+      downloadBtnLabel.textContent = 'Download PDF';
+    }).catch((err) => {
+      console.error(err);
+      downloadBtn.disabled = false;
+      downloadBtnLabel.textContent = 'Download PDF';
+      showError('Could not generate the PDF. Please try again, or use the Print button instead.');
+    });
+  });
+
+  /* ---------------- Helpers ---------------- */
   function parseDateSafe(s){
     if (!s) return null;
     const t = String(s).trim();
