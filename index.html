@@ -432,7 +432,8 @@
     body{ background:#fff; }
     header, .dropzone, .tabs, .filter-row, .selector, footer, .action-btn, .btn-ghost{ display:none !important; }
     .wrap{ max-width:100%; padding:0; }
-    .view{ display:block !important; }
+    .view{ display:none !important; }
+    .view.active{ display:block !important; }
     .summary{ margin-top:0; }
     .summary-head{ border-bottom:2px solid #000; }
     .company-group{ break-inside:avoid; }
@@ -473,6 +474,7 @@
 
   <div class="tabs" id="tabs">
     <button class="tab-btn on" id="tabMarket" type="button">Market Share</button>
+    <button class="tab-btn" id="tabProspects" type="button">Prospects</button>
     <button class="tab-btn" id="tabDealer" type="button">Dealer Lookup</button>
   </div>
 
@@ -514,6 +516,54 @@
       <div class="ms-empty" id="msEmpty" style="display:none;">No FACT transactions found in this district for any tracked product.</div>
       <div class="ms-note">Market share = FACT quantity ÷ total quantity sold by all companies (including FACT) for that product, in metric tonnes, for the selected district.</div>
     </div>
+  </div>
+
+  <!-- ===== PROSPECTS VIEW ===== -->
+  <div class="view" id="prospectsView">
+    <div class="filter-row">
+      <div class="field">
+        <label for="prospectDistrict">District</label>
+        <select id="prospectDistrict">
+          <option value="">All districts</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="prospectProduct">Product</label>
+        <select id="prospectProduct">
+          <option value="">Select a product…</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="summary" id="prospectsSummary" style="display:none;">
+      <div class="summary-head">
+        <div>
+          <h2 id="prospectsTitle">—</h2>
+          <div class="meta" id="prospectsMeta">—</div>
+        </div>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="pDealers">0</div><div class="lbl">Dealers Found</div></div>
+        <div class="stat"><div class="num" id="pOtherQty">0</div><div class="lbl">Qty from Competitors (MT)</div></div>
+        <div class="stat"><div class="num" id="pFactQty">0</div><div class="lbl">Qty from FACT (MT)</div></div>
+        <div class="stat"><div class="num" id="pNewProspects">0</div><div class="lbl">New Prospects</div></div>
+      </div>
+
+      <table class="ms-table" style="margin-top:28px;">
+        <thead><tr>
+          <th>Dealer</th>
+          <th>District</th>
+          <th>Bought From</th>
+          <th class="num">Qty from Others (MT)</th>
+          <th class="num">Qty from FACT (MT)</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="pBody"></tbody>
+      </table>
+      <div class="ms-note">Dealers who bought the selected product from a company other than FACT. "New Prospect" means they bought none of this product from FACT; "Cross-sell" means they split their purchase between FACT and a competitor.</div>
+    </div>
+    <div class="ms-empty" id="prospectsEmpty" style="display:none;">No competitor purchases of this product found for the selected district.</div>
+    <div class="ms-empty" id="prospectsPrompt">Choose a district and a product above to see which dealers bought it from a competitor.</div>
   </div>
 
   <!-- ===== DEALER LOOKUP VIEW ===== -->
@@ -566,8 +616,10 @@
 
   const tabs = document.getElementById('tabs');
   const tabMarket = document.getElementById('tabMarket');
+  const tabProspects = document.getElementById('tabProspects');
   const tabDealer = document.getElementById('tabDealer');
   const marketView = document.getElementById('marketView');
+  const prospectsView = document.getElementById('prospectsView');
   const dealerView = document.getElementById('dealerView');
 
   const districtFilter = document.getElementById('districtFilter');
@@ -578,6 +630,19 @@
   const msProducts = document.getElementById('msProducts');
   const msBody = document.getElementById('msBody');
   const msEmpty = document.getElementById('msEmpty');
+
+  const prospectDistrict = document.getElementById('prospectDistrict');
+  const prospectProduct = document.getElementById('prospectProduct');
+  const prospectsSummary = document.getElementById('prospectsSummary');
+  const prospectsEmpty = document.getElementById('prospectsEmpty');
+  const prospectsPrompt = document.getElementById('prospectsPrompt');
+  const prospectsTitle = document.getElementById('prospectsTitle');
+  const prospectsMeta = document.getElementById('prospectsMeta');
+  const pDealers = document.getElementById('pDealers');
+  const pOtherQty = document.getElementById('pOtherQty');
+  const pFactQty = document.getElementById('pFactQty');
+  const pNewProspects = document.getElementById('pNewProspects');
+  const pBody = document.getElementById('pBody');
 
   const dealerInput = document.getElementById('dealerInput');
   const dealerList = document.getElementById('dealerList');
@@ -591,24 +656,31 @@
   let rows = [];
   let factProducts = [];       // product names FACT sells, in overall qty-desc order
   let dealerIndex = new Map();
+  let activeTab = 'market';
 
   /* ---------------- Tabs ---------------- */
   tabMarket.addEventListener('click', () => switchTab('market'));
+  tabProspects.addEventListener('click', () => switchTab('prospects'));
   tabDealer.addEventListener('click', () => switchTab('dealer'));
   function switchTab(which){
-    const onMarket = which === 'market';
-    tabMarket.classList.toggle('on', onMarket);
-    tabDealer.classList.toggle('on', !onMarket);
-    marketView.classList.toggle('active', onMarket);
-    dealerView.classList.toggle('active', !onMarket);
+    activeTab = which;
+    tabMarket.classList.toggle('on', which === 'market');
+    tabProspects.classList.toggle('on', which === 'prospects');
+    tabDealer.classList.toggle('on', which === 'dealer');
+    marketView.classList.toggle('active', which === 'market');
+    prospectsView.classList.toggle('active', which === 'prospects');
+    dealerView.classList.toggle('active', which === 'dealer');
     updateActionButtons();
   }
 
   function updateActionButtons(){
-    const onMarket = marketView.classList.contains('active');
     const hasData = rows.length > 0;
     const dealerReady = summary.style.display !== 'none';
-    const show = hasData && (onMarket || dealerReady);
+    const prospectsReady = prospectsSummary.style.display !== 'none';
+    let show = false;
+    if (activeTab === 'market') show = hasData;
+    else if (activeTab === 'prospects') show = hasData && prospectsReady;
+    else show = hasData && dealerReady;
     printBtn.classList.toggle('active', show);
     downloadBtn.classList.toggle('active', show);
   }
@@ -712,6 +784,7 @@
     buildDealerIndex();
     buildFactProducts();
     buildDistrictOptions();
+    buildProductOptions();
     renderMarketShare();
 
     fileStatus.innerHTML = '<strong>' + escapeHtml(filename) + '</strong> · ' + rows.length + ' transactions · ' + dealerIndex.size + ' dealers';
@@ -722,6 +795,11 @@
     dealerInput.value = '';
     summary.style.display = 'none';
     noMatch.classList.remove('active');
+    prospectDistrict.value = '';
+    prospectProduct.value = '';
+    prospectsSummary.style.display = 'none';
+    prospectsEmpty.style.display = 'none';
+    prospectsPrompt.style.display = 'block';
     updateActionButtons();
   }
 
@@ -746,16 +824,32 @@
 
   function buildDistrictOptions(){
     const districts = Array.from(new Set(rows.map(r => r.district).filter(Boolean))).sort((a,b) => a.localeCompare(b));
-    districtFilter.innerHTML = '<option value="">All districts</option>';
-    districts.forEach(d => {
+    [districtFilter, prospectDistrict].forEach(sel => {
+      const placeholder = sel.options[0];
+      sel.innerHTML = '';
+      sel.appendChild(placeholder);
+      districts.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        sel.appendChild(opt);
+      });
+    });
+  }
+
+  function buildProductOptions(){
+    prospectProduct.innerHTML = '<option value="">Select a product…</option>';
+    factProducts.forEach(p => {
       const opt = document.createElement('option');
-      opt.value = d;
-      opt.textContent = d;
-      districtFilter.appendChild(opt);
+      opt.value = p;
+      opt.textContent = p;
+      prospectProduct.appendChild(opt);
     });
   }
 
   districtFilter.addEventListener('change', renderMarketShare);
+  prospectDistrict.addEventListener('change', renderProspects);
+  prospectProduct.addEventListener('change', renderProspects);
 
   function renderMarketShare(){
     const district = districtFilter.value;
@@ -801,6 +895,83 @@
           '<div class="share-cell"><div class="share-bar"><div class="share-bar-fill" style="width:' + Math.min(pct,100) + '%;"></div></div><span class="share-pct">' + pct + '%</span></div>' +
         '</td>';
       msBody.appendChild(tr);
+    });
+
+    updateActionButtons();
+  }
+
+  /* ---------------- Prospects (competitor buyers) ---------------- */
+  function renderProspects(){
+    const district = prospectDistrict.value;
+    const product = prospectProduct.value;
+
+    if (!product){
+      prospectsSummary.style.display = 'none';
+      prospectsEmpty.style.display = 'none';
+      prospectsPrompt.style.display = 'block';
+      updateActionButtons();
+      return;
+    }
+    prospectsPrompt.style.display = 'none';
+
+    const scoped = rows.filter(r => r.product === product && (!district || r.district === district));
+
+    // Aggregate per dealer: qty bought from competitors, companies list, and their FACT qty for this same product/scope
+    const byDealer = new Map();
+    scoped.forEach(r => {
+      const key = r.dealerName + (r.dealerId ? ' — ' + r.dealerId : '');
+      if (!byDealer.has(key)){
+        byDealer.set(key, {
+          dealerName: r.dealerName, dealerId: r.dealerId, district: r.district,
+          otherQty: 0, factQty: 0, companies: new Set(), txns: 0
+        });
+      }
+      const d = byDealer.get(key);
+      if (r.isFact){
+        d.factQty += r.qty;
+      } else {
+        d.otherQty += r.qty;
+        d.companies.add(r.company);
+        d.txns += 1;
+      }
+    });
+
+    const list = Array.from(byDealer.values()).filter(d => d.otherQty > 0);
+    list.sort((a,b) => b.otherQty - a.otherQty);
+
+    const totalOther = list.reduce((s,d) => s + d.otherQty, 0);
+    const totalFact = list.reduce((s,d) => s + d.factQty, 0);
+    const newProspects = list.filter(d => d.factQty === 0).length;
+
+    prospectsTitle.textContent = product;
+    prospectsMeta.textContent = (district ? district + ' district' : 'All districts') + ' · dealers buying from competitors';
+
+    pDealers.textContent = list.length;
+    pOtherQty.textContent = totalOther.toLocaleString(undefined,{maximumFractionDigits:2});
+    pFactQty.textContent = totalFact.toLocaleString(undefined,{maximumFractionDigits:2});
+    pNewProspects.textContent = newProspects;
+
+    pBody.innerHTML = '';
+    if (!list.length){
+      prospectsSummary.style.display = 'none';
+      prospectsEmpty.style.display = 'block';
+      updateActionButtons();
+      return;
+    }
+    prospectsEmpty.style.display = 'none';
+    prospectsSummary.style.display = 'block';
+
+    list.forEach(d => {
+      const tr = document.createElement('tr');
+      const isNew = d.factQty === 0;
+      tr.innerHTML =
+        '<td data-label="Dealer">' + escapeHtml(d.dealerName) + (d.dealerId ? '<br><span class="mono" style="font-size:11px;">ID ' + escapeHtml(d.dealerId) + '</span>' : '') + '</td>' +
+        '<td data-label="District">' + escapeHtml(d.district) + '</td>' +
+        '<td data-label="Bought From">' + escapeHtml(Array.from(d.companies).join(', ')) + '</td>' +
+        '<td data-label="Qty from Others (MT)" class="num mono">' + d.otherQty.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Qty from FACT (MT)" class="num mono">' + d.factQty.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Status"><span class="status" style="' + (isNew ? '' : 'background:#E4EDE7;color:var(--green-deep);') + '">' + (isNew ? 'New Prospect' : 'Cross-sell') + '</span></td>';
+      pBody.appendChild(tr);
     });
 
     updateActionButtons();
@@ -923,13 +1094,17 @@
   printBtn.addEventListener('click', () => window.print());
 
   downloadBtn.addEventListener('click', () => {
-    const onMarket = marketView.classList.contains('active');
-    const el = onMarket ? document.getElementById('marketSummary') : document.getElementById('summary');
-    let filenameBase;
-    if (onMarket){
+    let el, filenameBase;
+    if (activeTab === 'market'){
+      el = document.getElementById('marketSummary');
       const d = districtFilter.value;
       filenameBase = 'fact-market-share' + (d ? '-' + d : '-all-districts');
+    } else if (activeTab === 'prospects'){
+      el = document.getElementById('prospectsSummary');
+      const d = prospectDistrict.value, p = prospectProduct.value;
+      filenameBase = 'fact-prospects-' + (p || 'product') + (d ? '-' + d : '-all-districts');
     } else {
+      el = document.getElementById('summary');
       filenameBase = (document.getElementById('dealerName').textContent || 'dealer') + '-transactions';
     }
     const filename = filenameBase.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '.pdf';
