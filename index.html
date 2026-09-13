@@ -339,6 +339,16 @@
     color:var(--ochre);
   }
 
+  .dealer-link{
+    color:var(--green-deep);
+    text-decoration:none;
+    font-weight:500;
+    border-bottom:1px solid transparent;
+  }
+  .dealer-link:hover{
+    border-bottom-color:var(--green-deep);
+  }
+
   /* ---------- Market share table extras ---------- */
   .ms-table td.product, .ms-table th.product{ min-width:160px; }
   .share-cell{ display:flex; align-items:center; gap:10px; justify-content:flex-end; }
@@ -922,6 +932,7 @@
       const key = r.dealerName + (r.dealerId ? ' — ' + r.dealerId : '');
       if (!byDealer.has(key)){
         byDealer.set(key, {
+          key: key,
           dealerName: r.dealerName, dealerId: r.dealerId, district: r.district,
           otherQty: 0, factQty: 0, companies: new Set(), txns: 0
         });
@@ -965,7 +976,7 @@
       const tr = document.createElement('tr');
       const isNew = d.factQty === 0;
       tr.innerHTML =
-        '<td data-label="Dealer">' + escapeHtml(d.dealerName) + (d.dealerId ? '<br><span class="mono" style="font-size:11px;">ID ' + escapeHtml(d.dealerId) + '</span>' : '') + '</td>' +
+        '<td data-label="Dealer"><a href="#" class="dealer-link" data-key="' + escapeHtml(d.key) + '">' + escapeHtml(d.dealerName) + '</a>' + (d.dealerId ? '<br><span class="mono" style="font-size:11px;">ID ' + escapeHtml(d.dealerId) + '</span>' : '') + '</td>' +
         '<td data-label="District">' + escapeHtml(d.district) + '</td>' +
         '<td data-label="Bought From">' + escapeHtml(Array.from(d.companies).join(', ')) + '</td>' +
         '<td data-label="Qty from Others (MT)" class="num mono">' + d.otherQty.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
@@ -976,6 +987,16 @@
 
     updateActionButtons();
   }
+
+  pBody.addEventListener('click', (e) => {
+    const link = e.target.closest('.dealer-link');
+    if (!link) return;
+    e.preventDefault();
+    const key = link.getAttribute('data-key');
+    switchTab('dealer');
+    dealerInput.value = key;
+    selectDealer(key);
+  });
 
   /* ---------------- Dealer lookup ---------------- */
   function buildDealerIndex(){
