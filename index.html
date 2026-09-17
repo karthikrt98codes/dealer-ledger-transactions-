@@ -124,6 +124,10 @@
     border-color:var(--green);
     background:#F4F6EE;
   }
+  .dropzone.in-tab{
+    margin-top:28px;
+    padding:44px 32px;
+  }
   .dropzone .mark{
     font-family:'Fraunces',serif;
     font-size:22px;
@@ -281,6 +285,39 @@
     letter-spacing:0.05em;
     color:var(--ink-soft);
     margin-top:4px;
+  }
+
+  /* ---------- Filter row search input ---------- */
+  .filter-row input[type=text]{
+    font-family:'Inter',sans-serif;
+    font-size:14.5px;
+    padding:11px 14px;
+    border:1px solid var(--line);
+    border-radius:4px;
+    background:var(--surface);
+    color:var(--ink);
+    width:100%;
+  }
+
+  /* ---------- Dealer lookup: POS stock blocks ---------- */
+  .pos-block{ margin-top:36px; }
+  .pos-block h3{
+    font-family:'Fraunces',serif;
+    font-weight:500;
+    font-size:17px;
+    margin:0;
+    color:var(--ochre);
+  }
+  .pos-block .company-head{ border-bottom-color:var(--ochre); }
+  .pos-note{
+    margin-top:10px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+  }
+  .table-note{
+    margin-top:14px;
+    font-size:12px;
+    color:var(--ink-soft);
   }
 
   /* ---------- Company groups (dealer view) ---------- */
@@ -486,6 +523,8 @@
     <button class="tab-btn on" id="tabMarket" type="button">Market Share</button>
     <button class="tab-btn" id="tabProspects" type="button">Prospects</button>
     <button class="tab-btn" id="tabDealer" type="button">Dealer Lookup</button>
+    <button class="tab-btn" id="tabRetail" type="button">Retail Stock</button>
+    <button class="tab-btn" id="tabWholesale" type="button">Wholesale Stock</button>
   </div>
 
   <!-- ===== MARKET SHARE VIEW ===== -->
@@ -601,7 +640,112 @@
         <div class="stat"><div class="num" id="statCos">0</div><div class="lbl">Companies</div></div>
         <div class="stat"><div class="num" id="statRange">—</div><div class="lbl">Date Range</div></div>
       </div>
+      <div id="dealerPos"></div>
       <div id="groups"></div>
+    </div>
+  </div>
+
+  <!-- ===== RETAIL POS STOCK VIEW ===== -->
+  <div class="view" id="retailView">
+    <div class="dropzone in-tab" id="retailDropzone">
+      <div class="mark">＋ Upload Retail POS Stock</div>
+      <p>Drop the Retailer Weekly Stock .xlsx or .csv export here, or choose a file.<br>Nothing leaves your browser — the file is read locally.</p>
+      <button id="retailChooseBtn" type="button">Choose file</button>
+      <input type="file" id="retailFileInput" accept=".xlsx,.xls,.csv">
+      <div class="hint">Looks for a header row containing RETAILER ID, RETAILER NAME, PRODUCT</div>
+      <div class="error-box" id="retailErrorBox"></div>
+    </div>
+
+    <div id="retailContent" style="display:none;">
+      <div class="filter-row">
+        <div class="field">
+          <label for="retailDistrictFilter">District</label>
+          <select id="retailDistrictFilter"><option value="">All districts</option></select>
+        </div>
+        <div class="field">
+          <label for="retailCompanyFilter">Plant / Company</label>
+          <select id="retailCompanyFilter"><option value="">All plants</option></select>
+        </div>
+        <div class="field" style="flex:1;min-width:220px;">
+          <label for="retailSearch">Search retailer</label>
+          <input type="text" id="retailSearch" placeholder="Name or Retailer ID…">
+        </div>
+        <button class="btn-ghost" id="retailReplaceBtn" type="button">Replace file</button>
+      </div>
+
+      <div class="summary" id="retailSummary" style="display:block;">
+        <div class="summary-head">
+          <div>
+            <h2>Retail POS Stock</h2>
+            <div class="meta" id="retailMeta">—</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="num" id="retailStatDealers">0</div><div class="lbl">Retailers</div></div>
+          <div class="stat"><div class="num" id="retailStatRows">0</div><div class="lbl">Stock Lines</div></div>
+          <div class="stat"><div class="num" id="retailStatClosing">0</div><div class="lbl">Closing Balance (MT)</div></div>
+        </div>
+        <table style="margin-top:28px;">
+          <thead><tr>
+            <th>Retailer</th><th>District</th><th>Plant</th><th>Product</th>
+            <th class="num">Opening</th><th class="num">Received</th><th class="num">Sold</th><th class="num">Available</th><th class="num">Closing</th>
+          </tr></thead>
+          <tbody id="retailBody"></tbody>
+        </table>
+        <div class="table-note" id="retailTableNote"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WHOLESALE POS STOCK VIEW ===== -->
+  <div class="view" id="wholesaleView">
+    <div class="dropzone in-tab" id="wholesaleDropzone">
+      <div class="mark">＋ Upload Wholesale POS Stock</div>
+      <p>Drop the Wholesaler Stock .xlsx or .csv export here, or choose a file.<br>Nothing leaves your browser — the file is read locally.</p>
+      <button id="wholesaleChooseBtn" type="button">Choose file</button>
+      <input type="file" id="wholesaleFileInput" accept=".xlsx,.xls,.csv">
+      <div class="hint">Looks for a header row containing DEALER ID, AGENCY NAME, PRODUCT</div>
+      <div class="error-box" id="wholesaleErrorBox"></div>
+    </div>
+
+    <div id="wholesaleContent" style="display:none;">
+      <div class="filter-row">
+        <div class="field">
+          <label for="wholesaleDistrictFilter">District</label>
+          <select id="wholesaleDistrictFilter"><option value="">All districts</option></select>
+        </div>
+        <div class="field">
+          <label for="wholesaleCompanyFilter">Plant / Company</label>
+          <select id="wholesaleCompanyFilter"><option value="">All plants</option></select>
+        </div>
+        <div class="field" style="flex:1;min-width:220px;">
+          <label for="wholesaleSearch">Search dealer</label>
+          <input type="text" id="wholesaleSearch" placeholder="Name or Dealer ID…">
+        </div>
+        <button class="btn-ghost" id="wholesaleReplaceBtn" type="button">Replace file</button>
+      </div>
+
+      <div class="summary" id="wholesaleSummary" style="display:block;">
+        <div class="summary-head">
+          <div>
+            <h2>Wholesale POS Stock</h2>
+            <div class="meta" id="wholesaleMeta">—</div>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat"><div class="num" id="wholesaleStatDealers">0</div><div class="lbl">Wholesalers</div></div>
+          <div class="stat"><div class="num" id="wholesaleStatRows">0</div><div class="lbl">Stock Lines</div></div>
+          <div class="stat"><div class="num" id="wholesaleStatStock">0</div><div class="lbl">Total Stock (MT)</div></div>
+        </div>
+        <table style="margin-top:28px;">
+          <thead><tr>
+            <th>Dealer</th><th>District</th><th>Plant</th><th>Product</th>
+            <th class="num">Stock</th><th>Stock Date</th>
+          </tr></thead>
+          <tbody id="wholesaleBody"></tbody>
+        </table>
+        <div class="table-note" id="wholesaleTableNote"></div>
+      </div>
     </div>
   </div>
 
@@ -628,9 +772,13 @@
   const tabMarket = document.getElementById('tabMarket');
   const tabProspects = document.getElementById('tabProspects');
   const tabDealer = document.getElementById('tabDealer');
+  const tabRetail = document.getElementById('tabRetail');
+  const tabWholesale = document.getElementById('tabWholesale');
   const marketView = document.getElementById('marketView');
   const prospectsView = document.getElementById('prospectsView');
   const dealerView = document.getElementById('dealerView');
+  const retailView = document.getElementById('retailView');
+  const wholesaleView = document.getElementById('wholesaleView');
 
   const districtFilter = document.getElementById('districtFilter');
   const marketMeta = document.getElementById('marketMeta');
@@ -659,27 +807,76 @@
   const summary = document.getElementById('summary');
   const noMatch = document.getElementById('noMatch');
   const groupsEl = document.getElementById('groups');
+  const dealerPosEl = document.getElementById('dealerPos');
+
+  const retailDropzone = document.getElementById('retailDropzone');
+  const retailFileInput = document.getElementById('retailFileInput');
+  const retailChooseBtn = document.getElementById('retailChooseBtn');
+  const retailReplaceBtn = document.getElementById('retailReplaceBtn');
+  const retailErrorBox = document.getElementById('retailErrorBox');
+  const retailContent = document.getElementById('retailContent');
+  const retailMeta = document.getElementById('retailMeta');
+  const retailDistrictFilter = document.getElementById('retailDistrictFilter');
+  const retailCompanyFilter = document.getElementById('retailCompanyFilter');
+  const retailSearch = document.getElementById('retailSearch');
+  const retailBody = document.getElementById('retailBody');
+  const retailStatDealers = document.getElementById('retailStatDealers');
+  const retailStatRows = document.getElementById('retailStatRows');
+  const retailStatClosing = document.getElementById('retailStatClosing');
+  const retailTableNote = document.getElementById('retailTableNote');
+  const retailSummary = document.getElementById('retailSummary');
+
+  const wholesaleDropzone = document.getElementById('wholesaleDropzone');
+  const wholesaleFileInput = document.getElementById('wholesaleFileInput');
+  const wholesaleChooseBtn = document.getElementById('wholesaleChooseBtn');
+  const wholesaleReplaceBtn = document.getElementById('wholesaleReplaceBtn');
+  const wholesaleErrorBox = document.getElementById('wholesaleErrorBox');
+  const wholesaleContent = document.getElementById('wholesaleContent');
+  const wholesaleMeta = document.getElementById('wholesaleMeta');
+  const wholesaleDistrictFilter = document.getElementById('wholesaleDistrictFilter');
+  const wholesaleCompanyFilter = document.getElementById('wholesaleCompanyFilter');
+  const wholesaleSearch = document.getElementById('wholesaleSearch');
+  const wholesaleBody = document.getElementById('wholesaleBody');
+  const wholesaleStatDealers = document.getElementById('wholesaleStatDealers');
+  const wholesaleStatRows = document.getElementById('wholesaleStatRows');
+  const wholesaleStatStock = document.getElementById('wholesaleStatStock');
+  const wholesaleTableNote = document.getElementById('wholesaleTableNote');
+  const wholesaleSummary = document.getElementById('wholesaleSummary');
 
   const REQUIRED_HEADERS = ['TRANSACTION ID', 'DEALER NAME', 'QUANTITY(MT)'];
+  const REQUIRED_RETAIL_HEADERS = ['RETAILER ID', 'RETAILER NAME', 'PRODUCT'];
+  const REQUIRED_WHOLESALE_HEADERS = ['DEALER ID', 'AGENCY NAME', 'PRODUCT'];
   const FACT_PREFIX = 'FACT';
+  const MAX_STOCK_ROWS = 500;
 
   let rows = [];
   let factProducts = [];       // product names FACT sells, in overall qty-desc order
   let dealerIndex = new Map();
   let activeTab = 'market';
 
+  let retailRows = [];
+  let retailIndex = new Map();  // normalized RETAILER ID -> rows[]
+  let wholesaleRows = [];
+  let wholesaleIndex = new Map(); // normalized DEALER ID -> rows[]
+
   /* ---------------- Tabs ---------------- */
   tabMarket.addEventListener('click', () => switchTab('market'));
   tabProspects.addEventListener('click', () => switchTab('prospects'));
   tabDealer.addEventListener('click', () => switchTab('dealer'));
+  tabRetail.addEventListener('click', () => switchTab('retail'));
+  tabWholesale.addEventListener('click', () => switchTab('wholesale'));
   function switchTab(which){
     activeTab = which;
     tabMarket.classList.toggle('on', which === 'market');
     tabProspects.classList.toggle('on', which === 'prospects');
     tabDealer.classList.toggle('on', which === 'dealer');
+    tabRetail.classList.toggle('on', which === 'retail');
+    tabWholesale.classList.toggle('on', which === 'wholesale');
     marketView.classList.toggle('active', which === 'market');
     prospectsView.classList.toggle('active', which === 'prospects');
     dealerView.classList.toggle('active', which === 'dealer');
+    retailView.classList.toggle('active', which === 'retail');
+    wholesaleView.classList.toggle('active', which === 'wholesale');
     updateActionButtons();
   }
 
@@ -687,10 +884,14 @@
     const hasData = rows.length > 0;
     const dealerReady = summary.style.display !== 'none';
     const prospectsReady = prospectsSummary.style.display !== 'none';
+    const retailReady = retailRows.length > 0;
+    const wholesaleReady = wholesaleRows.length > 0;
     let show = false;
     if (activeTab === 'market') show = hasData;
     else if (activeTab === 'prospects') show = hasData && prospectsReady;
-    else show = hasData && dealerReady;
+    else if (activeTab === 'dealer') show = hasData && dealerReady;
+    else if (activeTab === 'retail') show = retailReady;
+    else if (activeTab === 'wholesale') show = wholesaleReady;
     printBtn.classList.toggle('active', show);
     downloadBtn.classList.toggle('active', show);
   }
@@ -818,6 +1019,389 @@
     let s = String(v).trim();
     s = s.replace(/^'+|'+$/g, '').trim();
     return s;
+  }
+
+  function normId(v){
+    if (v === undefined || v === null) return '';
+    let s = String(v).trim();
+    s = s.replace(/\.0+$/, '');
+    return s;
+  }
+
+  /* ---------------- Retail POS stock ---------------- */
+  retailChooseBtn.addEventListener('click', () => retailFileInput.click());
+  retailReplaceBtn.addEventListener('click', () => retailFileInput.click());
+  retailFileInput.addEventListener('change', e => { if (e.target.files[0]) handleRetailFile(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(evt =>
+    retailDropzone.addEventListener(evt, e => { e.preventDefault(); retailDropzone.classList.add('drag'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    retailDropzone.addEventListener(evt, e => { e.preventDefault(); retailDropzone.classList.remove('drag'); })
+  );
+  retailDropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files[0]) handleRetailFile(e.dataTransfer.files[0]);
+  });
+
+  function handleRetailFile(file){
+    retailErrorBox.style.display = 'none';
+    const reader = new FileReader();
+    reader.onerror = () => { retailErrorBox.textContent = 'Could not read that file. Please try again.'; retailErrorBox.style.display = 'block'; };
+    reader.onload = (e) => {
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: false });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        parseRetailGrid(grid, file.name);
+      }catch(err){
+        console.error(err);
+        retailErrorBox.textContent = 'Could not parse this file. Make sure it is a valid .xlsx or .csv export.';
+        retailErrorBox.style.display = 'block';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function parseRetailGrid(grid, filename){
+    let headerRowIdx = -1, headerRow = null;
+    for (let i = 0; i < Math.min(grid.length, 30); i++){
+      const cells = grid[i].map(c => String(c || '').trim().toUpperCase());
+      const hasAll = REQUIRED_RETAIL_HEADERS.every(h => cells.includes(h));
+      if (hasAll){ headerRowIdx = i; headerRow = grid[i].map(c => String(c || '').trim()); break; }
+    }
+    if (headerRowIdx === -1){
+      retailErrorBox.textContent = 'Could not find a stock header row (looking for columns like RETAILER ID, RETAILER NAME, PRODUCT).';
+      retailErrorBox.style.display = 'block';
+      return;
+    }
+
+    const col = {};
+    headerRow.forEach((h, idx) => { if (h) col[h.toUpperCase()] = idx; });
+    const get = (arr, name) => {
+      const idx = col[name];
+      if (idx === undefined) return '';
+      return cleanCell(arr[idx]);
+    };
+
+    const newRows = [];
+    for (let i = headerRowIdx + 1; i < grid.length; i++){
+      const r = grid[i];
+      if (!r || r.every(c => String(c||'').trim() === '')) continue;
+      const retailerId = get(r, 'RETAILER ID');
+      if (!retailerId) continue;
+      newRows.push({
+        retailerId: retailerId,
+        retailerName: get(r, 'RETAILER NAME'),
+        state: get(r, 'STATE NAME'),
+        district: get(r, 'DISTRICT NAME'),
+        subDistrict: get(r, 'SUB DISTRICT'),
+        mobile: get(r, 'MOBILE NO.') || get(r, 'MOBILE NO'),
+        dealershipNature: get(r, 'DEALERSHIP NATURE'),
+        company: get(r, 'COMPANY'),
+        plant: get(r, 'PLANT'),
+        product: get(r, 'PRODUCT'),
+        opening: parseFloat(get(r, 'OPENING BALANCE') || '0') || 0,
+        received: parseFloat(get(r, 'RECEIVED QUANTITY') || '0') || 0,
+        sold: parseFloat(get(r, 'SOLD QUANTITY') || '0') || 0,
+        availability: parseFloat(get(r, 'AVAILABILTY') || get(r, 'AVAILABILITY') || '0') || 0,
+        closing: parseFloat(get(r, 'CLOSING BALANCE') || '0') || 0
+      });
+    }
+
+    if (newRows.length === 0){
+      retailErrorBox.textContent = 'Found a header row, but no stock rows underneath it.';
+      retailErrorBox.style.display = 'block';
+      return;
+    }
+
+    retailRows = newRows;
+    retailIndex = new Map();
+    retailRows.forEach(r => {
+      const key = normId(r.retailerId);
+      if (!retailIndex.has(key)) retailIndex.set(key, []);
+      retailIndex.get(key).push(r);
+    });
+
+    buildStockFilterOptions(retailRows, retailDistrictFilter, retailCompanyFilter, 'plant');
+    retailMeta.textContent = filename + ' · ' + retailRows.length + ' stock lines · ' + retailIndex.size + ' retailers';
+    retailDropzone.style.display = 'none';
+    retailContent.style.display = 'block';
+    renderRetailTable();
+    if (activeTab === 'retail') updateActionButtons();
+  }
+
+  [retailDistrictFilter, retailCompanyFilter].forEach(el => el.addEventListener('change', renderRetailTable));
+  let retailSearchTimer;
+  retailSearch.addEventListener('input', () => {
+    clearTimeout(retailSearchTimer);
+    retailSearchTimer = setTimeout(renderRetailTable, 150);
+  });
+
+  function renderRetailTable(){
+    const district = retailDistrictFilter.value;
+    const plant = retailCompanyFilter.value;
+    const q = retailSearch.value.trim().toLowerCase();
+
+    const filtered = retailRows.filter(r => {
+      if (district && r.district !== district) return false;
+      if (plant && r.plant !== plant) return false;
+      if (q && !(r.retailerName.toLowerCase().includes(q) || r.retailerId.toLowerCase().includes(q))) return false;
+      return true;
+    });
+
+    const dealerSet = new Set(filtered.map(r => normId(r.retailerId)));
+    const totalClosing = filtered.reduce((s,r) => s + r.closing, 0);
+    retailStatDealers.textContent = dealerSet.size;
+    retailStatRows.textContent = filtered.length;
+    retailStatClosing.textContent = totalClosing.toLocaleString(undefined,{maximumFractionDigits:2});
+
+    retailBody.innerHTML = '';
+    const shown = filtered.slice(0, MAX_STOCK_ROWS);
+    shown.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td data-label="Retailer">' + escapeHtml(r.retailerName) + '<br><span class="mono" style="font-size:11px;">ID ' + escapeHtml(r.retailerId) + '</span></td>' +
+        '<td data-label="District">' + escapeHtml(r.district) + '</td>' +
+        '<td data-label="Plant">' + escapeHtml(r.plant) + '</td>' +
+        '<td data-label="Product">' + escapeHtml(r.product) + '</td>' +
+        '<td data-label="Opening" class="num mono">' + r.opening.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Received" class="num mono">' + r.received.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Sold" class="num mono">' + r.sold.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Available" class="num mono">' + r.availability.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Closing" class="num mono">' + r.closing.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>';
+      retailBody.appendChild(tr);
+    });
+    retailTableNote.textContent = filtered.length > MAX_STOCK_ROWS
+      ? 'Showing first ' + MAX_STOCK_ROWS + ' of ' + filtered.length.toLocaleString() + ' matching lines — narrow with the filters above to see more.'
+      : '';
+  }
+
+  /* ---------------- Wholesale POS stock ---------------- */
+  wholesaleChooseBtn.addEventListener('click', () => wholesaleFileInput.click());
+  wholesaleReplaceBtn.addEventListener('click', () => wholesaleFileInput.click());
+  wholesaleFileInput.addEventListener('change', e => { if (e.target.files[0]) handleWholesaleFile(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(evt =>
+    wholesaleDropzone.addEventListener(evt, e => { e.preventDefault(); wholesaleDropzone.classList.add('drag'); })
+  );
+  ['dragleave','drop'].forEach(evt =>
+    wholesaleDropzone.addEventListener(evt, e => { e.preventDefault(); wholesaleDropzone.classList.remove('drag'); })
+  );
+  wholesaleDropzone.addEventListener('drop', e => {
+    if (e.dataTransfer.files[0]) handleWholesaleFile(e.dataTransfer.files[0]);
+  });
+
+  function handleWholesaleFile(file){
+    wholesaleErrorBox.style.display = 'none';
+    const reader = new FileReader();
+    reader.onerror = () => { wholesaleErrorBox.textContent = 'Could not read that file. Please try again.'; wholesaleErrorBox.style.display = 'block'; };
+    reader.onload = (e) => {
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array', cellDates: false });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+        parseWholesaleGrid(grid, file.name);
+      }catch(err){
+        console.error(err);
+        wholesaleErrorBox.textContent = 'Could not parse this file. Make sure it is a valid .xlsx or .csv export.';
+        wholesaleErrorBox.style.display = 'block';
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function parseWholesaleGrid(grid, filename){
+    let headerRowIdx = -1, headerRow = null;
+    for (let i = 0; i < Math.min(grid.length, 30); i++){
+      const cells = grid[i].map(c => String(c || '').trim().toUpperCase());
+      const hasAll = REQUIRED_WHOLESALE_HEADERS.every(h => cells.includes(h));
+      if (hasAll){ headerRowIdx = i; headerRow = grid[i].map(c => String(c || '').trim()); break; }
+    }
+    if (headerRowIdx === -1){
+      wholesaleErrorBox.textContent = 'Could not find a stock header row (looking for columns like DEALER ID, AGENCY NAME, PRODUCT).';
+      wholesaleErrorBox.style.display = 'block';
+      return;
+    }
+
+    const col = {};
+    headerRow.forEach((h, idx) => { if (h) col[h.toUpperCase()] = idx; });
+    const get = (arr, name) => {
+      const idx = col[name];
+      if (idx === undefined) return '';
+      return cleanCell(arr[idx]);
+    };
+
+    const newRows = [];
+    for (let i = headerRowIdx + 1; i < grid.length; i++){
+      const r = grid[i];
+      if (!r || r.every(c => String(c||'').trim() === '')) continue;
+      const dealerId = get(r, 'DEALER ID');
+      if (!dealerId) continue;
+      newRows.push({
+        dealerId: dealerId,
+        agencyName: get(r, 'AGENCY NAME'),
+        state: get(r, 'STATE'),
+        district: get(r, 'DISTRICT'),
+        dealerType: get(r, 'DEALER TYPE'),
+        dealershipNature: get(r, 'DEALERSHIP NATURE'),
+        company: get(r, 'COMPANY'),
+        plant: get(r, 'PLANT'),
+        product: get(r, 'PRODUCT'),
+        stock: parseFloat(get(r, 'STOCK') || '0') || 0,
+        stockDate: get(r, 'STOCK DATE')
+      });
+    }
+
+    if (newRows.length === 0){
+      wholesaleErrorBox.textContent = 'Found a header row, but no stock rows underneath it.';
+      wholesaleErrorBox.style.display = 'block';
+      return;
+    }
+
+    wholesaleRows = newRows;
+    wholesaleIndex = new Map();
+    wholesaleRows.forEach(r => {
+      const key = normId(r.dealerId);
+      if (!wholesaleIndex.has(key)) wholesaleIndex.set(key, []);
+      wholesaleIndex.get(key).push(r);
+    });
+
+    buildStockFilterOptions(wholesaleRows, wholesaleDistrictFilter, wholesaleCompanyFilter, 'plant');
+    wholesaleMeta.textContent = filename + ' · ' + wholesaleRows.length + ' stock lines · ' + wholesaleIndex.size + ' wholesalers';
+    wholesaleDropzone.style.display = 'none';
+    wholesaleContent.style.display = 'block';
+    renderWholesaleTable();
+    if (activeTab === 'wholesale') updateActionButtons();
+  }
+
+  [wholesaleDistrictFilter, wholesaleCompanyFilter].forEach(el => el.addEventListener('change', renderWholesaleTable));
+  let wholesaleSearchTimer;
+  wholesaleSearch.addEventListener('input', () => {
+    clearTimeout(wholesaleSearchTimer);
+    wholesaleSearchTimer = setTimeout(renderWholesaleTable, 150);
+  });
+
+  function renderWholesaleTable(){
+    const district = wholesaleDistrictFilter.value;
+    const plant = wholesaleCompanyFilter.value;
+    const q = wholesaleSearch.value.trim().toLowerCase();
+
+    const filtered = wholesaleRows.filter(r => {
+      if (district && r.district !== district) return false;
+      if (plant && r.plant !== plant) return false;
+      if (q && !(r.agencyName.toLowerCase().includes(q) || r.dealerId.toLowerCase().includes(q))) return false;
+      return true;
+    });
+
+    const dealerSet = new Set(filtered.map(r => normId(r.dealerId)));
+    const totalStock = filtered.reduce((s,r) => s + r.stock, 0);
+    wholesaleStatDealers.textContent = dealerSet.size;
+    wholesaleStatRows.textContent = filtered.length;
+    wholesaleStatStock.textContent = totalStock.toLocaleString(undefined,{maximumFractionDigits:2});
+
+    wholesaleBody.innerHTML = '';
+    const shown = filtered.slice(0, MAX_STOCK_ROWS);
+    shown.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td data-label="Dealer">' + escapeHtml(r.agencyName) + '<br><span class="mono" style="font-size:11px;">ID ' + escapeHtml(r.dealerId) + '</span></td>' +
+        '<td data-label="District">' + escapeHtml(r.district) + '</td>' +
+        '<td data-label="Plant">' + escapeHtml(r.plant) + '</td>' +
+        '<td data-label="Product">' + escapeHtml(r.product) + '</td>' +
+        '<td data-label="Stock" class="num mono">' + r.stock.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+        '<td data-label="Stock Date" class="mono">' + escapeHtml(r.stockDate) + '</td>';
+      wholesaleBody.appendChild(tr);
+    });
+    wholesaleTableNote.textContent = filtered.length > MAX_STOCK_ROWS
+      ? 'Showing first ' + MAX_STOCK_ROWS + ' of ' + filtered.length.toLocaleString() + ' matching lines — narrow with the filters above to see more.'
+      : '';
+  }
+
+  function buildStockFilterOptions(dataRows, districtSel, plantSel, plantField){
+    const districts = Array.from(new Set(dataRows.map(r => r.district).filter(Boolean))).sort((a,b) => a.localeCompare(b));
+    const placeholderD = districtSel.options[0];
+    districtSel.innerHTML = '';
+    districtSel.appendChild(placeholderD);
+    districts.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      districtSel.appendChild(opt);
+    });
+
+    const plants = Array.from(new Set(dataRows.map(r => r[plantField]).filter(Boolean))).sort((a,b) => a.localeCompare(b));
+    const placeholderP = plantSel.options[0];
+    plantSel.innerHTML = '';
+    plantSel.appendChild(placeholderP);
+    plants.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      plantSel.appendChild(opt);
+    });
+  }
+
+  /* ---------------- Dealer lookup: POS stock blocks ---------------- */
+  function renderDealerPos(dealerId){
+    const key = normId(dealerId);
+    const retail = key ? (retailIndex.get(key) || []) : [];
+    const wholesale = key ? (wholesaleIndex.get(key) || []) : [];
+
+    dealerPosEl.innerHTML = '';
+    if (!retail.length && !wholesale.length) return;
+
+    if (retail.length){
+      const retailClosing = retail.reduce((s,r) => s + r.closing, 0);
+      const block = document.createElement('div');
+      block.className = 'pos-block company-group';
+      const head = document.createElement('div');
+      head.className = 'company-head';
+      head.innerHTML = '<h3>Retail POS Stock</h3>' +
+        '<span class="company-qty">' + retail.length + ' line' + (retail.length===1?'':'s') + ' · ' + retailClosing.toLocaleString(undefined,{maximumFractionDigits:2}) + ' MT closing</span>';
+      block.appendChild(head);
+      const table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Plant</th><th>Product</th><th class="num">Opening</th><th class="num">Received</th><th class="num">Sold</th><th class="num">Available</th><th class="num">Closing</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      retail.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td data-label="Plant">' + escapeHtml(r.plant) + '</td>' +
+          '<td data-label="Product">' + escapeHtml(r.product) + '</td>' +
+          '<td data-label="Opening" class="num mono">' + r.opening.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+          '<td data-label="Received" class="num mono">' + r.received.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+          '<td data-label="Sold" class="num mono">' + r.sold.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+          '<td data-label="Available" class="num mono">' + r.availability.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+          '<td data-label="Closing" class="num mono">' + r.closing.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      block.appendChild(table);
+      dealerPosEl.appendChild(block);
+    }
+
+    if (wholesale.length){
+      const wholesaleStock = wholesale.reduce((s,r) => s + r.stock, 0);
+      const block = document.createElement('div');
+      block.className = 'pos-block company-group';
+      const head = document.createElement('div');
+      head.className = 'company-head';
+      head.innerHTML = '<h3>Wholesale POS Stock</h3>' +
+        '<span class="company-qty">' + wholesale.length + ' line' + (wholesale.length===1?'':'s') + ' · ' + wholesaleStock.toLocaleString(undefined,{maximumFractionDigits:2}) + ' MT stock</span>';
+      block.appendChild(head);
+      const table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Plant</th><th>Product</th><th class="num">Stock</th><th>Stock Date</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+      wholesale.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td data-label="Plant">' + escapeHtml(r.plant) + '</td>' +
+          '<td data-label="Product">' + escapeHtml(r.product) + '</td>' +
+          '<td data-label="Stock" class="num mono">' + r.stock.toLocaleString(undefined,{maximumFractionDigits:2}) + '</td>' +
+          '<td data-label="Stock Date" class="mono">' + escapeHtml(r.stockDate) + '</td>';
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      block.appendChild(table);
+      dealerPosEl.appendChild(block);
+    }
   }
 
   /* ---------------- Market share ---------------- */
@@ -1050,6 +1634,8 @@
     if (first.dealerId) metaBits.unshift('ID ' + first.dealerId);
     document.getElementById('dealerMeta').textContent = metaBits.join(' · ');
 
+    renderDealerPos(first.dealerId);
+
     const totalQty = txns.reduce((s,t) => s + t.qty, 0);
     const companies = new Set(txns.map(t => t.company));
     const dates = txns.map(t => parseDateSafe(t.invoiceDate)).filter(Boolean).sort((a,b)=>a-b);
@@ -1124,6 +1710,12 @@
       el = document.getElementById('prospectsSummary');
       const d = prospectDistrict.value, p = prospectProduct.value;
       filenameBase = 'fact-prospects-' + (p || 'product') + (d ? '-' + d : '-all-districts');
+    } else if (activeTab === 'retail'){
+      el = retailSummary;
+      filenameBase = 'fact-retail-pos-stock';
+    } else if (activeTab === 'wholesale'){
+      el = wholesaleSummary;
+      filenameBase = 'fact-wholesale-pos-stock';
     } else {
       el = document.getElementById('summary');
       filenameBase = (document.getElementById('dealerName').textContent || 'dealer') + '-transactions';
