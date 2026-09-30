@@ -995,6 +995,7 @@
     buildDealerIndex();
     buildFactProducts();
     buildDistrictOptions();
+    prospectDistrict.value = '';
     buildProductOptions();
     renderMarketShare();
 
@@ -1432,17 +1433,25 @@
   }
 
   function buildProductOptions(){
+    const district = prospectDistrict.value;
+    const previous = prospectProduct.value;
     prospectProduct.innerHTML = '<option value="">Select a product…</option>';
-    factProducts.forEach(p => {
+    // Only products present in the selected district (or all districts if none selected), A–Z
+    const scoped = district ? rows.filter(r => r.district === district) : rows;
+    const products = Array.from(new Set(scoped.map(r => r.product).filter(Boolean)))
+      .sort((a,b) => a.localeCompare(b));
+    products.forEach(p => {
       const opt = document.createElement('option');
       opt.value = p;
       opt.textContent = p;
       prospectProduct.appendChild(opt);
     });
+    // Keep the previous selection only if it still exists in this district
+    if (previous && products.includes(previous)) prospectProduct.value = previous;
   }
 
   districtFilter.addEventListener('change', renderMarketShare);
-  prospectDistrict.addEventListener('change', renderProspects);
+  prospectDistrict.addEventListener('change', () => { buildProductOptions(); renderProspects(); });
   prospectProduct.addEventListener('change', renderProspects);
 
   function renderMarketShare(){
